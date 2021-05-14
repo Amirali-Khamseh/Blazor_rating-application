@@ -1,0 +1,91 @@
+﻿@page "/post/detail/{Id:int}"
+@inject IPostRepository postRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<div class="container mt-4 p-5 shadow">
+    @if (post != null)
+    {
+        <div class="col-12 text-center">
+            <img src="@post.Image" class="rounded w-100" />
+        </div>
+        <div class="col-12 pt-3">
+            <h1>@post.Title</h1>
+        </div>
+        <div class="col-12 pt-3">
+            <p>@post.Description</p>
+        </div>
+        <div class="col-12 pt-3">
+            <p><strong>Date : </strong> @post.CreatedDate</p>
+            @if (post.Category != null)
+            {
+                <p><strong>Category : </strong> @post.Category.Name</p>
+            }
+            else
+            {
+                <p>Without Category</p>
+            }
+            <p><strong>Likes : </strong> @post.Like</p>
+            @if (!ShowLoading)
+            {
+                <button class="btn btn-success rounded-pill text-white" @onclick="LikePost">
+                    👍
+                </button>
+            }else
+            {
+                <i>Please wait...</i>
+            }
+        </div>
+    }else
+    {
+        <p class="alert alert-info">Wait for load</p>
+    }
+</div>
+@code {
+    Post post;
+    [Parameter]
+    public int Id { get; set; }
+    public string Message = null;
+    public bool ShowMessage = false;
+    public bool ShowLoading = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var myPostResult = await postRepository.GetPostWithId(Id);
+        if (myPostResult.Status)
+        {
+            if (myPostResult.Response != null)
+            {
+                post = myPostResult.Response;
+            }
+        }
+        else
+        {
+            ShowMessage = true;
+            Message = "Not Found";
+        }
+    }
+
+    private async Task LikePost()
+    {
+        ShowLoading = true;
+        var result = await postRepository.LikePost(Id);
+        ShowMessage = true;
+        if (result.Status)
+        {
+            if (result.Response)
+            {
+                post.Like = post.Like + 1;
+                Message = "All done";
+            }else
+            {
+                Message = "Something went wrong";
+            }
+        }else
+        {
+            Message = "Something went wrong";
+        }
+        await Task.Delay(1000);
+        ShowLoading = false;
+    }
+}

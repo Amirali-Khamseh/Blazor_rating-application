@@ -1,0 +1,86 @@
+﻿@inject IPostRepository postRepository
+@inject NavigationManager navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@if (likePosts != null)
+{
+    <h3 class="text-left p-3">🔥Trending 🔥</h3>
+    @if (likePosts.Count > 0)
+    {
+        <div class="row">
+            @foreach (Post item in likePosts)
+            {
+
+                <div class="col-md-4">
+                    <div class="card mb-4 shadow-sm">
+                        <img src="@item.Image" class="w-100 border-bottom" style=" max-height: 250px; max-width = 250px;"/>
+                        <div class="card-body">
+                            <h3 class="card-title">@item.Title</h3>
+                            @if (item.Category != null)
+                            {
+                                <p class="card-text">
+                                    <strong>Category :</strong> @item.Category.Name
+                                </p>
+                            }
+                            <p class="card-text">
+                                <strong>Likes :</strong> @item.Like
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="@(() => ShowDetail(item.Id))">Show</button>
+                                </div>
+                                <small class="text-muted">@item.CreatedDate</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            }
+        </div>
+    }
+    else
+    {
+        <p class="alert alert-info text-center">The List is Empty</p>
+    }
+}
+else
+{
+    <Loading />
+}
+
+@code {
+    public List<Post> likePosts { get; set; }
+    private Task<AuthenticationState> authState;
+    public string CurrentUserId = null;
+    protected async override Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUserId = authState.User.Claims.Where(p => p.Type == "CurrentUserId").Select(c => c.Value).FirstOrDefault();
+
+        var getLikePosts = await postRepository.GetPostsOrderByLike();
+
+        if (getLikePosts.Status)
+        {
+            if (getLikePosts.Response != null)
+            {
+                if (getLikePosts.Response.Count > 0)
+                {
+                    likePosts = getLikePosts.Response;
+                }
+                else
+                {
+                    likePosts = new List<Post>();
+                }
+            }
+
+        }
+        else
+        {
+            likePosts = new List<Post>();
+        }
+    }
+    private void ShowDetail(int id)
+    {
+        navigation.NavigateTo($"/post/detail/{id}");
+    }
+}

@@ -1,0 +1,35 @@
+﻿@page "/category/list"
+@attribute [Authorize]
+@inject ICategoryRepository categoryRepository
+
+<div class="container mt-4 shadow p-5">
+    @if (ShowMessage)
+    {
+        <p class="text-center alert alert-info">
+            @Message
+        </p>
+    }
+    <table class="table table-responsive mt-auto">
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+        </tr>
+        @if (categories != null)
+        {
+            @if (categories.Count > 0)
+            {
+                @foreach (Category item in categories)
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>@item.Name</td>
+                    </tr>
+                }
+            }
+        }
+        else
+        {
+            <Loading />
+        }
+    </table>
+</div>

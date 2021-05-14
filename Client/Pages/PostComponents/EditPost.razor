@@ -1,0 +1,160 @@
+﻿@page "/post/edit/{Id:int}"
+@inject IPostRepository postRepository
+@inject ICategoryRepository categoryRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<div class="container shadow mt-4 p-5">
+    @if (CurrentUserId != null)
+    {
+        @if (ShowMessage)
+        {
+            <p class="text-center alert alert-info">@Message</p>
+        }
+        <EditForm Model="post" OnValidSubmit="EditThisPost">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label>Category : </label>
+                <select @bind="post.CategoryId" class="form-control">
+                    @if (categories != null && categories.Count > 0)
+                    {
+                        <option value="0">Select Category</option>
+                        foreach (Category item in categories)
+                        {
+                            if (post.CategoryId == item.Id)
+                            {
+                                <option value="@item.Id" selected>@item.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        <option value="0">Category Not Selected</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Title :</label>
+                <input type="text" class="form-control" @bind-value="post.Title" />
+            </div>
+            <div class="form-group">
+                <label>Image URL :</label>
+                <input type="text" class="form-control" @bind-value="post.Image" />
+                @if (post.Image != null)
+                {
+                    <img src="@post.Image" width="150" class="rounded mt-2" />
+                }
+            </div>
+            <div class="form-group">
+                <label>Description :</label>
+                @*<input type="text" class="form-control" @bind-value="post.Title" />*@
+                <textarea cols="30" rows="3" @bind="post.Description" class="form-control"></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-success mt-3">
+                    Submit
+                </button>
+            </div>
+        </EditForm>
+    }else
+    {
+        <p>You dont have permission</p>
+    }
+</div>
+
+
+@code {
+    Post post;
+
+    [Parameter]
+    public int Id { get; set; }
+    public string Message = null;
+    public bool ShowMessage = false;
+    List<Category> categories;
+    public string CurrentUserId = null;
+    private Task<AuthenticationState> authState;
+    protected async override Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUserId = authState.User.Claims.Where(p => p.Type == "CurrentUserId").Select(c => c.Value).FirstOrDefault();
+
+        post = new Post();
+
+        var myPostResult = await postRepository.GetPostWithId(Id);
+        if (myPostResult.Status)
+        {
+            if (myPostResult.Response != null)
+            {
+                if (myPostResult.Response.UserId == CurrentUserId)
+                {
+                    post = myPostResult.Response;
+                }else
+                {
+                    CurrentUserId = null;
+                }
+
+            }
+        }
+        else
+        {
+            ShowMessage = true;
+            Message = "There is no such a post";
+        }
+
+        var result = await categoryRepository.GetCategories();
+        if (result.Status)
+        {
+            if (result.Response != null && result.Response.Count > 0)
+            {
+                categories = result.Response;
+            }
+            else
+            {
+                categories = new List<Category>();
+            }
+        }
+        else
+        {
+            categories = new List<Category>();
+        }
+
+
+    }
+
+    private async Task EditThisPost()
+    {
+        if (post.CategoryId == 0)
+        {
+            ShowMessage = true;
+            Message = "Category Field is required !";
+        }
+        else
+        {
+            var result = await postRepository.UpdatePost(post);
+            ShowMessage = true;
+            if (result.Status)
+            {
+                if (result.Response)
+                {
+                    Message = "Post has been edited successfuly";
+                }
+                else
+                {
+                    Message = "Failed to edit the post";
+                }
+            }
+            else
+            {
+                Message = "Something went wrong ,try again";
+            }
+        }
+
+    }
+}

@@ -1,0 +1,50 @@
+﻿@page "/"
+@inject IUserRepository userRepository
+@inject NavigationManager navigationManager
+@using FinalBlazorIndivisualUser.Client.Pages.PostComponents
+
+@*<PostListComponent />*@
+<div class="container-fluid shadow-sm mt-4 p-5">
+    <ShowLikePosts />
+    <PostListNewDesign />
+</div>
+@*<AuthorizeView>
+    <Authorized>
+        <h4>Welcome</h4> 
+        @context.User.Identity.Name
+    </Authorized>
+    <NotAuthorized>
+        <h4>You are not loggedIn</h4>
+        <NavLink ActiveClass="nav-link" @onclick="Login">Login to Site</NavLink>
+    </NotAuthorized>
+</AuthorizeView>*@
+
+@*<h3>Users List</h3>*@
+
+@*@if (ShowMessage)
+{
+    <p class="alert alert-success">@Message</p>
+}else
+{
+    <p class="alert alert-danger">@Message</p>
+    <p class="alert alert-danger">@Message</p>
+}*@
+
+@*<table class="table table-responsive">
+    <tr>
+        <th>Id</th>
+        <th>Email</th>
+        <th>FullName</th>
+    </tr>
+    @if (users != null)
+    {
+        @foreach (User item in users)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Email</td>
+                <td>@item.FullName</td>
+            </tr>
+        }
+    }
+</table>*@

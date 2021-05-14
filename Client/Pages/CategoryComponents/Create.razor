@@ -1,0 +1,54 @@
+﻿@page "/category/create"
+@inject ICategoryRepository catRepository
+@attribute [Authorize]
+
+<div class="container p-5 shadow">
+    @if (ShowMessage)
+    {
+        <p class="text-center alert alert-info">@Message</p>
+    }
+    <EditForm Model="category" OnValidSubmit="CreateCategory">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Name :</label>
+            <input type="text" class="form-control" @bind-value="category.Name" />
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-success mt-3">
+                Submit
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    Category category;
+    public string Message = null;
+    public bool ShowMessage = false;
+    protected override void OnInitialized()
+    {
+        category = new Category();
+
+    }
+
+    private async Task CreateCategory()
+    {
+        var result = await catRepository.CreateCategory(category);
+        ShowMessage = true;
+        if (result.Status)
+        {
+            if (result.Response)
+            {
+                Message = "Category created successfuly 🥂 ";
+            }else
+            {
+                Message = "Category creation failed , try again 😔";
+            }
+        }else
+        {
+            Message = "Error occured while creating new category 😴";
+        }
+    }
+}

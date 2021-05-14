@@ -1,0 +1,124 @@
+﻿@inject IPostRepository postRepository
+@inject NavigationManager navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+<div class="container mt-3 p-5 shadow">
+    @if (posts != null)
+    {
+        <table class="table table-responsive">
+
+            @if (posts.Count > 0)
+            {
+                <tr>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Likes</th>
+                    <th>Image</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Options</th>
+                </tr>
+                @foreach (Post item in posts)
+                {
+                    <tr>
+                        <td class="p-2">@item.Id</td>
+                        <td class="p-2">@item.Title</td>
+                        <td class="p-2">@item.Like</td>
+                        <td>
+                            <img width="80" src="@item.Image" class="rounded" />
+                        </td>
+                        <td class="p-2">@item.Category.Name</td>
+                        <td class="p-2">@item.CreatedDate</td>
+                        <td class="p-2">
+                            @if (item.UserId == CurrentUserId)
+                            {
+                                <button type="button" class="btn btn-danger" @onclick="@(() => DeletePost(item.Id))">
+                                    Delete
+                                </button>
+                                <NavLink type="button" class="btn btn-primary text-white" @onclick="@(() => EditPost(item.Id))">
+                                    Edit
+                                </NavLink>
+                            }
+                            <NavLink type="button" class="btn btn-info text-white" @onclick="@(() => ShowDetail(item.Id))">
+                                Detail
+                            </NavLink>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td>The list is Empty</td>
+                </tr>
+            }
+        </table>
+    }
+    else
+    {
+        <Loading />
+    }
+
+</div>
+@code {
+    public List<Post> posts { get; set; }
+    public string Message = null;
+    public bool ShowMessage = false;
+    private Task<AuthenticationState> authState;
+    public string CurrentUserId = null;
+    protected async override Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUserId = authState.User.Claims.Where(p => p.Type == "CurrentUserId").Select(c => c.Value).FirstOrDefault();
+
+        var result = await postRepository.GetPosts();
+        ShowMessage = true;
+        if (result.Status)
+        {
+            if (result.Response != null)
+            {
+                if (result.Response.Count > 0)
+                {
+                    Message = $"Number Of Posts {result.Response.Count}";
+                    posts = result.Response;
+                }
+                else
+                {
+                    Message = "Number Of Posts 0";
+                    posts = new List<Post>();
+                }
+            }
+            else
+            {
+                Message = "Pending...";
+            }
+
+        }
+        else
+        {
+            Message = "Http Error";
+            posts = new List<Post>();
+        }
+    }
+    private async Task DeletePost(int id)
+    {
+        var result = await postRepository.DeletePost(id);
+        ShowMessage = true;
+        if (result.Status)
+        {
+            posts.Remove(posts.FirstOrDefault(p => p.Id == id));
+            Message = "Post has been Deleted !";
+        }
+        else
+        {
+            Message = "We are not able to remove the Post !";
+        }
+    }
+    private void EditPost(int id)
+    {
+        navigation.NavigateTo($"/post/edit/{id}");
+    }
+    private void ShowDetail(int id)
+    {
+        navigation.NavigateTo($"/post/detail/{id}");
+    }
+}
